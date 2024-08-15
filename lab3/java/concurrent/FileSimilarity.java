@@ -1,8 +1,11 @@
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 public class FileSimilarity {
     static Map<String, List<Long>> fileFingerprints = new HashMap<>();
+
+    static Semaphore mutex = new Semaphore(1);
 
     static class FingerprintThread extends Thread {
         String path;
@@ -15,8 +18,30 @@ public class FileSimilarity {
         public void run() {
             try {
                 List<Long> fingerprint = fileSum(path);
+                mutex.acquire();
                 fileFingerprints.put(path, fingerprint);
-            } catch (IOException e) {System.out.println(e);}
+                mutex.release();
+            } catch (Exception e) {System.out.println(e);}
+        }
+    }
+
+    static class SimilarityThread extends Thread {
+        String file1;
+        String file2;
+
+        public SimilarityThread(String file1, String file2){
+            this.file1 = file1;
+            this.file2 = file2;
+        }
+
+        @Override
+        public void run() {
+            try {
+                List<Long> fingerprint1 = fileFingerprints.get(file1);
+                List<Long> fingerprint2 = fileFingerprints.get(file2);
+                float similarityScore = similarity(fingerprint1, fingerprint2);
+                System.out.println("Similarity between " + file1 + " and " + file2 + ": " + (similarityScore * 100) + "%");
+            } catch (Exception e) {System.out.println(e);}
         }
     }
 
@@ -26,18 +51,11 @@ public class FileSimilarity {
             System.exit(1);
         }
 
-        // Create a map to store the fingerprint for each file
-        //Map<String, List<Long>> fileFingerprints = new HashMap<>();
-
         List<Thread> thrList = new ArrayList<>();
-        // Calculate the fingerprint for each file
         for (String path : args) {
             FingerprintThread thr = new FingerprintThread(path);
             thrList.add(thr);
             thr.start();
-            
-            //List<Long> fingerprint = fileSum(path);
-            //fileFingerprints.put(path, fingerprint);
         }
 
         for (Thread i : thrList) {
@@ -49,10 +67,8 @@ public class FileSimilarity {
             for (int j = i + 1; j < args.length; j++) {
                 String file1 = args[i];
                 String file2 = args[j];
-                List<Long> fingerprint1 = fileFingerprints.get(file1);
-                List<Long> fingerprint2 = fileFingerprints.get(file2);
-                float similarityScore = similarity(fingerprint1, fingerprint2);
-                System.out.println("Similarity between " + file1 + " and " + file2 + ": " + (similarityScore * 100) + "%");
+                SimilarityThread thr = new SimilarityThread(file1, file2);
+                thr.start();
             }
         }
     }
