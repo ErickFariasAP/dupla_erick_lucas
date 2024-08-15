@@ -62,7 +62,6 @@ public class FileSimilarity {
             i.join();
         }
 
-        // Compare each pair of files
         for (int i = 0; i < args.length; i++) {
             for (int j = i + 1; j < args.length; j++) {
                 String file1 = args[i];
@@ -97,12 +96,21 @@ public class FileSimilarity {
 
     private static float similarity(List<Long> base, List<Long> target) {
         int counter = 0;
-        List<Long> targetCopy = new ArrayList<>(target);
-
+        Map<Long, Integer> freqs = new HashMap<Long, Integer>();
+        for (Long e: target){
+            if (freqs.get(e) == null){
+                freqs.put(e, 1);
+            }
+            else{
+                freqs.put(e, freqs.get(e)+1);
+            }
+        }
         for (Long value : base) {
-            if (targetCopy.contains(value)) {
-                counter++;
-                targetCopy.remove(value);
+            if (freqs.get(value) != null) {
+                if (freqs.get(value) > 0){
+                    counter++;
+                    freqs.put(value, freqs.get(value)-1);
+                }
             }
         }
 
