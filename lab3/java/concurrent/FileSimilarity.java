@@ -7,7 +7,7 @@ public class FileSimilarity {
 
     static Semaphore mutex = new Semaphore(1);
 
-    static class FingerprintThread extends Thread {
+    static class FingerprintThread implements Runnable {
         String path;
 
         public FingerprintThread(String path){
@@ -25,7 +25,7 @@ public class FileSimilarity {
         }
     }
 
-    static class SimilarityThread extends Thread {
+    static class SimilarityThread implements Runnable {
         String file1;
         String file2;
 
@@ -53,9 +53,9 @@ public class FileSimilarity {
 
         List<Thread> thrList = new ArrayList<>();
         for (String path : args) {
-            FingerprintThread thr = new FingerprintThread(path);
-            thrList.add(thr);
-            thr.start();
+            Thread thr1 = new Thread(new FingerprintThread(path));
+            thrList.add(thr1);
+            thr1.start();
         }
 
         for (Thread i : thrList) {
@@ -66,8 +66,8 @@ public class FileSimilarity {
             for (int j = i + 1; j < args.length; j++) {
                 String file1 = args[i];
                 String file2 = args[j];
-                SimilarityThread thr = new SimilarityThread(file1, file2);
-                thr.start();
+                Thread thr2 = new Thread(new SimilarityThread(file1, file2));
+                thr2.start();
             }
         }
     }
