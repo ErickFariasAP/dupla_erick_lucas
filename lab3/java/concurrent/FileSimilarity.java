@@ -29,11 +29,19 @@ public class FileSimilarity {
         // Create a map to store the fingerprint for each file
         //Map<String, List<Long>> fileFingerprints = new HashMap<>();
 
+        List<Thread> thrList = new ArrayList<>();
         // Calculate the fingerprint for each file
         for (String path : args) {
             FingerprintThread thr = new FingerprintThread(path);
+            thrList.add(thr);
+            thr.start();
+            
             //List<Long> fingerprint = fileSum(path);
             //fileFingerprints.put(path, fingerprint);
+        }
+
+        for (Thread i : thrList) {
+            i.join();
         }
 
         // Compare each pair of files
