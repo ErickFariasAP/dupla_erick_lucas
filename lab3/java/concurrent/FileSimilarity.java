@@ -2,6 +2,23 @@ import java.io.*;
 import java.util.*;
 
 public class FileSimilarity {
+    static Map<String, List<Long>> fileFingerprints = new HashMap<>();
+
+    static class FingerprintThread extends Thread {
+        String path;
+
+        public FingerprintThread(String path){
+            this.path = path;
+        }
+
+        @Override
+        public void run() {
+            try {
+                List<Long> fingerprint = fileSum(path);
+                fileFingerprints.put(path, fingerprint);
+            } catch (IOException e) {System.out.println(e);}
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
@@ -10,12 +27,13 @@ public class FileSimilarity {
         }
 
         // Create a map to store the fingerprint for each file
-        Map<String, List<Long>> fileFingerprints = new HashMap<>();
+        //Map<String, List<Long>> fileFingerprints = new HashMap<>();
 
         // Calculate the fingerprint for each file
         for (String path : args) {
-            List<Long> fingerprint = fileSum(path);
-            fileFingerprints.put(path, fingerprint);
+            FingerprintThread thr = new FingerprintThread(path);
+            //List<Long> fingerprint = fileSum(path);
+            //fileFingerprints.put(path, fingerprint);
         }
 
         // Compare each pair of files
@@ -66,4 +84,5 @@ public class FileSimilarity {
 
         return (float) counter / base.size();
     }
+    
 }
